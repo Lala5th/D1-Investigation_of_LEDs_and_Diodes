@@ -9,9 +9,12 @@ args = sys.argv
 rm = pyvisa.ResourceManager()
 inst = rm.open_resource('USB0::0x05E6::0x2450::04392009::INSTR')
 
+if inst.query("*LANG?") != "TSP\n":
+	inst.write("*LANG TSP")
+
 inst.write('smu.measure.func = smu.FUNC_DC_VOLTAGE')
 inst.write('smu.source.func  = smu.FUNC_DC_CURRENT')
-inst.write('smu.source.vlimit.level = 5')
+inst.write('smu.source.vlimit.level = 5.5')
 inst.write("smu.source.output = smu.ON")
 
 I0 = float(args[1])
@@ -33,6 +36,8 @@ for I in Is:
 	ds = d.split('\t')
 	data.append([float(ds[0]),float(ds[1])])
 
+
+inst.write("smu.source.output = smu.OFF")
 save_data = np.array(data)
 plt.plot(save_data[:,0],save_data[:,1])
 
