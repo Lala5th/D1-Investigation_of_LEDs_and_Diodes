@@ -13,30 +13,33 @@ inst = rm.open_resource('USB0::0x05E6::0x2450::04392009::INSTR')
 if inst.query("*LANG?") != "TSP\n":
 	inst.write("*LANG TSP")
 
-inst.write('smu.measure.func = smu.FUNC_DC_VOLTAGE')
-inst.write('smu.source.func  = smu.FUNC_DC_CURRENT')
-inst.write('smu.source.vlimit.level = 5.5')
+inst.write('smu.measure.func = smu.FUNC_DC_CURRENT')
+inst.write('smu.source.func  = smu.FUNC_DC_VOLTAGE')
+inst.write('smu.source.ilimit.level = 0.2')
 
-I0 = float(args[1])
-Im = float(args[2])
-Istep = float(args[3])
+V0 = float(args[1])
+Vm = float(args[2])
+Vstep = float(args[3])
 
-if Im >= 0.3 or I0 >= 0.3:
+if Vm > 5 or V0 > 5:
 	sys.exit()
 
-Is = np.arange(I0,Im,Istep)
+Vs = np.arange(V0,Vm,Vstep)
 data = []
 inst.write("defbuffer1.clear()")
-for I in Is:
-	inst.write("smu.source.level = " + str(I))
+for V in Vs:
+	inst.write("smu.source.level = " + str(V))
 	sleep(0.01)
 	inst.write("smu.source.output = smu.ON")
 	d = inst.query("print(smu.measure.read(defbuffer1),defbuffer1.sourcevalues[1])")
 	inst.write("smu.source.output = smu.OFF")
-	print(d)
-	inst.write("defbuffer1.clear()")
 	ds = d.split('\t')
-	data.append([float(ds[0]),float(ds[1])])
+	inst.write("defbuffer1.clear()")
+	if(float(ds[1]) > 1000):
+		continue
+	print(d)
+	data.append([float(ds[1]),float(ds[0])])
+
 
 save_data = np.array(data)
 plt.figure()
