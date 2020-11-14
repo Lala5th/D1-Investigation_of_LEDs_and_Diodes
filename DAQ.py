@@ -27,17 +27,19 @@ if Im >= 0.3 or I0 >= 0.3:
 Is = np.arange(I0,Im,Istep)
 data = []
 inst.write("defbuffer1.clear()")
+inst.write("smu.source.output = smu.ON")
 for I in Is:
 	inst.write("smu.source.level = " + str(I))
-	sleep(0.01)
-	inst.write("smu.source.output = smu.ON")
+	#sleep(0.01)
 	d = inst.query("print(smu.measure.read(defbuffer1),defbuffer1.sourcevalues[1])")
-	inst.write("smu.source.output = smu.OFF")
 	print(d)
 	inst.write("defbuffer1.clear()")
 	ds = d.split('\t')
+	if(float(ds[0]) > 5.5 or float(ds[0]) < -5.5 or float(ds[1]) > 1000 or float(ds[1]) < -1000):
+		continue
 	data.append([float(ds[0]),float(ds[1])])
 
+inst.write("smu.source.output = smu.OFF")
 save_data = np.array(data)
 plt.figure()
 plt.plot(save_data[:,0],save_data[:,1])
