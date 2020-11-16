@@ -16,6 +16,7 @@ if inst.query("*LANG?") != "TSP\n":
 inst.write('smu.measure.func = smu.FUNC_DC_VOLTAGE')
 inst.write('smu.source.func  = smu.FUNC_DC_CURRENT')
 inst.write('smu.source.vlimit.level = 5.5')
+inst.write('smu.source.offmode = smu.OFFMODE_NORMAL')
 
 I0 = float(args[1])
 Im = float(args[2])
@@ -32,8 +33,9 @@ for I in Is:
 	inst.write("smu.source.level = " + str(I))
 	#sleep(0.01)
 	d = inst.query("print(smu.measure.read(defbuffer1),defbuffer1.sourcevalues[1])")
-	print(d)
 	inst.write("defbuffer1.clear()")
+	ds = d.split('\t')
+	print(d)
 	ds = d.split('\t')
 	if(float(ds[0]) > 5.5 or float(ds[0]) < -5.5 or float(ds[1]) > 1000 or float(ds[1]) < -1000):
 		continue
