@@ -12,4 +12,4 @@ setup-Temperature[_DAQ].csv,
 - b2: Diode is 1N4148
 - b3: Diode is 1N4001
 
-Any datasets after this will bear the ID of the diode on them. The temperature is either RT (room temperature) or LN (Liquid nitrogen).
+Any datasets after this will bear the ID of the diode on them. The temperature is either RT (room temperature) or LN (Liquid nitrogen). The LED datasets are numbered according to their number in lab except for LED3 which is marked 4 in the lab
