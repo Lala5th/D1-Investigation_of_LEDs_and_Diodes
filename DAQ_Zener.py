@@ -15,14 +15,14 @@ if inst.query("*LANG?") != "TSP\n":
 
 inst.write('smu.measure.func = smu.FUNC_DC_VOLTAGE')
 inst.write('smu.source.func  = smu.FUNC_DC_CURRENT')
-inst.write('smu.source.vlimit.level = 5.5')
+inst.write('smu.source.vlimit.level = 15')
 inst.write('smu.source.offmode = smu.OFFMODE_NORMAL')
 
 I0 = float(args[1])
 Im = float(args[2])
 Istep = float(args[3])
 
-if Im >= 0.3 or I0 >= 0.3:
+if Im > 0.5 or I0 > 0.5:
 	sys.exit()
 
 Is = np.arange(I0,Im,Istep)
@@ -37,7 +37,7 @@ for I in Is:
 	ds = d.split('\t')
 	print(d)
 	ds = d.split('\t')
-	if(float(ds[0]) > 5.5 or float(ds[0]) < -5.5 or float(ds[1]) > 1000 or float(ds[1]) < -1000):
+	if(float(ds[0]) > 15 or float(ds[0]) < -15 or float(ds[1]) > 1000 or float(ds[1]) < -1000):
 		continue
 	data.append([float(ds[0]),float(ds[1])])
 

@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from time import sleep
 
-R = 15.08
+R = 0
 plt.ion()
 args = sys.argv
 rm = pyvisa.ResourceManager()
@@ -15,7 +15,7 @@ if inst.query("*LANG?") != "TSP\n":
 
 inst.write('smu.measure.func = smu.FUNC_DC_VOLTAGE')
 inst.write('smu.source.func  = smu.FUNC_DC_CURRENT')
-inst.write('smu.source.vlimit.level = 5.5')
+inst.write('smu.source.vlimit.level = 12')
 inst.write('smu.source.offmode = smu.OFFMODE_NORMAL')
 
 I0 = float(args[1])
