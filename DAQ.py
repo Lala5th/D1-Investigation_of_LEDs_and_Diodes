@@ -31,7 +31,7 @@ inst.write("defbuffer1.clear()")
 inst.write("smu.source.output = smu.ON")
 last = 0
 for I in Is:
-	if 10**int(np.log(I)/np.log(10) - 2) > I - last:
+	if 10**(int(np.log(I)/np.log(10)) - 2.01) > I - last:
 		continue
 	last = I
 	inst.write("smu.source.level = " + str(I))
