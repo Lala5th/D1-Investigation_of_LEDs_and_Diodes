@@ -34,7 +34,7 @@ ns = []
 plt.ion()
 dtype = [('V',np.float64,()),('I',np.float64,())]
 IStep = 0.00001
-V_err = 0.01
+V_err = 0.005
 
 def monotonity_check(x,y):
 	mask = np.ones(x.size, dtype=bool)
@@ -166,15 +166,15 @@ def final_plots():
 	min = I0s[:,0].min()
 	max = I0s[:,0].max()
 	Is = np.linspace(min,max,1000)
-	plt.figure()
-	plt.errorbar(I0s[:,0],I0s[:,1],yerr = I0s[:,2],fmt='x',capsize=4)
-	plt.plot(Is,Isat(Is,*fit))
-	plt.show()
-	plt.figure()
-	plt.errorbar(ns[:,0],ns[:,1],yerr = ns[:,2],fmt='x',capsize=4)
-	plt.ylabel('$n_{id}$ [1]')
-	plt.xlabel('T [K]')
+	fig, (ax1,ax2) = plt.subplots(2,1,sharex=True)
+	ax1.errorbar(I0s[:,0],I0s[:,1],yerr = I0s[:,2],fmt='x',capsize=4)
+	ax1.plot(Is,Isat(Is,*fit))
 	ax1.grid()
+	ax1.set_ylabel('$I_0$ [A]')
+	ax1.set_yscale('log')
+	ax2.errorbar(ns[:,0],ns[:,1],yerr = ns[:,2],fmt='x',capsize=4)
+	ax2.set_ylabel('$n_{id}$ [1]')
+	ax2.set_xlabel('T [K]')
 	ax2.grid()
 	plt.show()
 	for i in zip(pIsat,fit,np.sqrt(np.diag(cov)),Iparamunits):
