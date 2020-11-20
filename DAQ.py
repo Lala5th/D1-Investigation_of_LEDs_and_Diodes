@@ -38,7 +38,6 @@ for I in Is:
 	#sleep(0.01)
 	d = inst.query("print(smu.measure.read(defbuffer1),defbuffer1.sourcevalues[1])")
 	inst.write("defbuffer1.clear()")
-	ds = d.split('\t')
 	print(d)
 	ds = d.split('\t')
 	if(float(ds[0]) > 5.5 or float(ds[0]) < -5.5 or float(ds[1]) > 1000 or float(ds[1]) < -1000):
