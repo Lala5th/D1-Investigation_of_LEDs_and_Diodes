@@ -23,7 +23,8 @@ def derive(x,y,n=3):
 	ret_avg = interp1d(moving_average(ret[:,0],1),moving_average(ret[:,1],1),fill_value='extrapolate')
 	mask = np.ones(ret[:,1].size, dtype=bool)
 	for i in range(1,ret[:,1].size):
-		if(np.abs(ret[i,1]-ret_avg(ret[i,0]-0.01))> 0.25):
+		if(np.abs(ret[i,1]-ret_avg(ret[i,0]-0.01))> 1 or np.abs(ret[i,1]-ret_avg(ret[i,0]+0.01))> 1):
+			#pass
 			mask[i] = False
 	return ret[mask]
 
@@ -82,7 +83,7 @@ data = load_data(dataloc)
 T = float(input("Temperature of dataset [K]: "))
 true_V = data['V'] - data['I']*R
 cum_data.append([data['V'],data['I'],true_V])
-der = derive(true_V,data['I'],n=1)
+der = derive(true_V,data['I'],n=2)
 index = der[:,1].argmax()
 n = const.e/(der[index,1]*const.k*T)
 n_err = V_err*const.e/(const.k*T*der[index,1]**2)

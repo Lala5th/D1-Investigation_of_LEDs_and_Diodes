@@ -23,7 +23,8 @@ def derive(x,y,n=3):
 	ret_avg = interp1d(moving_average(ret[:,0],1),moving_average(ret[:,1],1),fill_value='extrapolate')
 	mask = np.ones(ret[:,1].size, dtype=bool)
 	for i in range(1,ret[:,1].size):
-		if(np.abs(ret[i,1]-ret_avg(ret[i,0]-0.01))> 0.25):
+		if(np.abs(ret[i,1]-ret_avg(ret[i,0]-0.01))> 1 or np.abs(ret[i,1]-ret_avg(ret[i,0]+0.01))> 1):
+			#pass
 			mask[i] = False
 	return ret[mask]
 
@@ -34,7 +35,7 @@ ns = []
 plt.ion()
 dtype = [('V',np.float64,()),('I',np.float64,())]
 IStep = 0.00001
-V_err = 0.005
+V_err = 0.1
 
 def monotonity_check(x,y):
 	mask = np.ones(x.size, dtype=bool)
@@ -92,8 +93,10 @@ while(True):
 	T = float(input("Temperature of dataset [K]: "))
 	true_V = data['V'] - data['I']*R
 	cum_data.append([data['V'],data['I'],true_V])
-	der = derive(true_V,data['I'],n=1)
+	der = derive(true_V,data['I'],n=2)
 	index = der[:,1].argmax()
+	loc = np.where(np.abs(der[index,0] - true_V) < V_err)
+	fit,cov = fit_shockley(true_V[loc],np.log(data['I'][loc]))
 	n = const.e/(der[index,1]*const.k*T)
 	n_err = V_err*const.e/(const.k*T*der[index,1]**2)
 	I0 = np.exp(np.log(data['I'][index])-der[index,1]*der[index,0])
@@ -101,6 +104,7 @@ while(True):
 	der2 = derive(der[:,0],der[:,1],n=1)
 	fig, (ax1,ax2) = plt.subplots(2,1,sharex=True)
 	ax1.plot(true_V,data['I'],'-')
+	ax1.plot(true_V[loc],shockley(true_V[loc],*fit))
 	ax1.set_yscale('log')
 	ax1.set_ylabel('I [A]')
 	ax2.set_xlabel('V [V]')
@@ -111,15 +115,14 @@ while(True):
 	fig.canvas.show()
 	fig.canvas.draw()
 	fig.canvas.flush_events()
-	print('n :',n,'+-',n_err)
-	print('I0 :',I0,'+-',I0_err)
-	I0s.append([T,I0,I0_err])
-	ns.append([T,n,n_err])
-
-def Isat(x,c,Eg):
-	return c*x**3 * np.exp(-const.e*Eg/(const.k*x))
-pIsat = ['c','Eg']
-Iparamunits = ['A/K^3','eV']
+	for i in zip(params,fit,np.sqrt(np.diag(cov)),paramunits):
+		print(i[0],':',i[1],'+-',i[2],i[3])
+	I0s.append([T,fit[0],np.sqrt(cov[0,0])])
+	ns.append([T,fit[1],np.sqrt(cov[1,1])])
+	#print('n :',n,'+-',n_err)
+	#print('I0 :',I0,'+-',I0_err)
+	#I0s.append([T,I0,I0_err])
+	#ns.append([T,n,n_err])
 
 def refit_data(dataset_i):
 	dataloc = input("Dataset: ")
@@ -158,11 +161,21 @@ def refit_data(dataset_i):
 	I0s[dataset_i] = [T,I0,I0_err]
 	ns[dataset_i] = [T,n,n_err]
 
+nf = None
+
 def final_plots():
-	global ns,I0s
+	global ns,I0s,nf
 	I0s = np.array(I0s)
 	ns = np.array(ns)
-	fit,cov = curve_fit(Isat,I0s[:,0],I0s[:,1],sigma=I0s[:,2],bounds=np.array([[0,np.inf],[0,np.inf]]).transpose(),absolute_sigma=True,maxfev = 10000)
+	nfit, ncov = curve_fit(lambda x, a, b : a*x + b, ns[:,0],ns[:,1],sigma=ns[:,2], absolute_sigma=True)
+	nf = lambda x : [ns[:,1].mean()]*x.size#lambda x : nfit[0]*x + nfit[1]
+	def Isat(x,c,Eg0,a,b):
+		global nf
+		Eg = Eg0 - a*1e-3*x**2/(x+b)
+		return c*x**3 *np.exp(-const.e*Eg/(const.k*x))
+	pIsat = ['c','Eg0','a','b']
+	Iparamunits = ['A/K^3','eV','meV/K','K']
+	fit,cov = curve_fit(Isat,I0s[:,0],I0s[:,1],sigma=I0s[:,2],bounds=np.array([[0,np.inf],[0,np.inf],[-np.inf,np.inf],[-np.inf,np.inf]]).transpose(),p0=[1,1,0.5,200],absolute_sigma=True,maxfev = 10000)
 	min = I0s[:,0].min()
 	max = I0s[:,0].max()
 	Is = np.linspace(min,max,1000)
@@ -173,6 +186,7 @@ def final_plots():
 	ax1.set_ylabel('$I_0$ [A]')
 	ax1.set_yscale('log')
 	ax2.errorbar(ns[:,0],ns[:,1],yerr = ns[:,2],fmt='x',capsize=4)
+	ax2.plot(Is,nf(Is))
 	ax2.set_ylabel('$n_{id}$ [1]')
 	ax2.set_xlabel('T [K]')
 	ax2.grid()
