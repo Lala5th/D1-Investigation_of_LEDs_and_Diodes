@@ -64,6 +64,20 @@ plt.ylabel('Current [Np]')
 
 Vgs = []
 
+try:
+	data1 = load_data(args[1] + 'LN.csv')
+	true_V = data1['V']-R*data1['I']
+	der = derive(true_V,data1['I'],n=2)
+	loc = np.where(der[:,1] > 10)[0]
+	loc = loc[np.where(loc > 2)[0][0]]
+	refloc = np.where(true_V < der[loc,0])[0][-1]
+	plt.plot(true_V,np.log(data1['I']/data1['I'][refloc]),label='77 K',color=cmap(77/400))
+	plt.axvline(der[loc,0],linestyle='--',color=cmap(77/400))
+	print('V:',der[loc,0],'+-',0.005*der[loc,0],'V')
+	Vgs.append([77,der[loc,0],0.005*der[loc,0]])
+except:
+	pass
+
 for i in range(11):
 	d = i*10
 	try:
@@ -76,8 +90,8 @@ for i in range(11):
 	loc = loc[np.where(loc > 10)[0][0]]
 	refloc = np.where(true_V < der[loc,0])[0][-1]
 
-	plt.plot(true_V,np.log(data1['I']/data1['I'][refloc]),label=str(d+273) + ' K',color=cmap(d/150))
-	plt.axvline(der[loc,0],linestyle='--',color=cmap(d/150))
+	plt.plot(true_V,np.log(data1['I']/data1['I'][refloc]),label=str(d+273) + ' K',color=cmap((d+273)/500))
+	plt.axvline(der[loc,0],linestyle='--',color=cmap((d+273)/500))
 	print('V:',der[loc,0],'+-',0.005*der[loc,0],'V')
 	Vgs.append([d+273,der[loc,0],0.005*der[loc,0]])
 
