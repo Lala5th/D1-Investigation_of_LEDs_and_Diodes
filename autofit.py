@@ -12,6 +12,17 @@ def moving_average(a, n=3) :
 	ret[n:] = ret[n:] - ret[:-n]
 	return ret[n - 1:] / n
 
+def get_chi_squared(func,params,x,y,error):
+    assert(x.shape == y.shape)
+    global removed_bg
+    #diff = np.abs(x[0]-x)
+    #diff_nonzero = diff[np.nonzero(diff)]
+    #error = 0.25*diff_nonzero[diff_nonzero.argmin()]/2
+    #error = np.std(data1['I'][0:200])
+    chi_squared = np.sum((y - func(x,*params))**2/error**2)
+    ndof = x.size - params.size
+    return chi_squared/ndof
+
 def derive(x,y,n=3):
 	x_avg = moving_average(x,n)
 	y_avg = moving_average(np.log(y),n)
@@ -116,6 +127,7 @@ for i in zip(names,temps):
 		I0 = np.exp(np.log(data['I'][index])-der[index,1]*der[index,0])
 		I0_err = V_err*np.sqrt(2)*I0*der[index,1]
 		der2 = derive(der[:,0],der[:,1],n=1)
+		IV0 = np.exp((np.log(data['I'][loc][0]) + np.log(data['I'][loc][-1]))/2)
 		ax1.plot(true_V[loc],shockley(true_V[loc],*fit))
 		fig.canvas.show()
 		fig.canvas.draw()
@@ -126,7 +138,7 @@ for i in zip(names,temps):
 		#	continue
 		#if fit[1] > 2.1 or fit[1] < 1:
 		#	continue
-		I0s.append([T,fit[0],np.sqrt(cov[0,0])])
+		I0s.append([T,IV0*(fit[0]/IV0)**fit[1],np.sqrt(cov[1,1]*(np.log((fit[0]/IV0))*IV0*(fit[0]/IV0)**fit[1])**2+cov[0,0]*(IV0*fit[1]*(fit[0]/IV0)**(fit[1]-1))**2)])
 		ns.append([T,fit[1],np.sqrt(cov[1,1])])
 		#print('n :',n,'+-',n_err)
 		#print('I0 :',I0,'+-',I0_err)
@@ -180,14 +192,14 @@ def final_plots():
 	I0s = np.array(I0s)
 	ns = np.array(ns)
 	nfit, ncov = curve_fit(lambda x, a, b : a*x + b, ns[:,0],ns[:,1],sigma=ns[:,2], absolute_sigma=True)
-	nf = interp1d(moving_average(ns[:,0],n=1),moving_average(ns[:,1],n=1),fill_value='extrapolate',kind=1)
+	nf = lambda x : 1#interp1d(moving_average(ns[:,0],n=1),moving_average(ns[:,1],n=1),fill_value='extrapolate',kind=1)
 	def Isat(x,c,Eg0):
 		global nf
-		#Eg = lambda T : Eg0 - a*1e-6*T**2/(T+b)
+		Eg = lambda T : Eg0# - a*T**2/(T+b)
 		#return c*x**3 *np.exp(-const.e*Eg0/(const.k*x))
-		return np.log(c*x**2) - const.e*Eg0/(const.k*nf(x)*x)
+		return np.log(c*x**2) - const.e*Eg(x)/(const.k*nf(x)*x)
 	pIsat = ['c','Eg','a','b']
-	Iparamunits = ['A/K^3','eV','ueV/K','K']
+	Iparamunits = ['A/K^3','eV','eV/K','K']
 	#true_I = I0s[:,1]/ns[:,1]
 	#true_I_err = np.sqrt((I0s[:,2]/true_I)**2 + (ns[:,2]/ns[:,1])**2)*true_I
 	fit,cov = curve_fit(Isat,I0s[:,0],np.log(I0s[:,1]),sigma=I0s[:,2]/I0s[:,1],bounds=np.array([[0,np.inf],[0,np.inf]]).transpose(),absolute_sigma=True,maxfev = 100000)
@@ -203,7 +215,7 @@ def final_plots():
 	ax1.set_ylabel('$I_0$ [A]')
 	ax1.set_yscale('log')
 	ax2.errorbar(ns[:,0],ns[:,1],yerr = ns[:,2],fmt='x',capsize=4)
-	ax2.plot(Is,nf(Is))
+	#ax2.plot(Is,nf(Is))
 	ax2.set_ylabel('$n_{id}$ [1]')
 	ax2.set_xlabel('T [K]')
 	ax2.grid()
@@ -211,5 +223,6 @@ def final_plots():
 	cov[1,1] = cov[1,1] + ns[:,2].mean()*fit[1]/ns[:,1].mean()**2
 	for i in zip(pIsat,fit,np.sqrt(np.diag(cov)),Iparamunits):
 		print(i[0],':',i[1],'+-',i[2],i[3])
+	print('Chi_sq:',get_chi_squared(Isat,fit,I0s[:,0],np.log(I0s[:,1]),I0s[:,2]/I0s[:,1]))
 
 final_plots()
