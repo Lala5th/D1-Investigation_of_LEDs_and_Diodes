@@ -197,7 +197,7 @@ def final_plots():
 		global nf
 		Eg = lambda T : Eg0# - a*T**2/(T+b)
 		#return c*x**3 *np.exp(-const.e*Eg0/(const.k*x))
-		return np.log(c*x**2) - const.e*Eg(x)/(const.k*nf(x)*x)
+		return np.log(c*x**3) - const.e*Eg(x)/(const.k*nf(x)*x)
 	pIsat = ['c','Eg','a','b']
 	Iparamunits = ['A/K^3','eV','eV/K','K']
 	#true_I = I0s[:,1]/ns[:,1]
